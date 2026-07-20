@@ -1,106 +1,78 @@
-# Choice Tailors (TailorPro AI) - Smart Tailor Management System
+# Choice Tailors - Shop Management Portal
 
-This repository digitizes **Choice Tailors** (Gandhi Chok, Kadi) tailoring business operation with an AI-Powered Customer Management, Bespoke Measurements Registry, Multi-item Order Pipeline, and GST-ready Billing receipt PDF generator.
-
----
-
-## Technical Stack
-
-- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS, Framer Motion
-- **Backend**: Python FastAPI, JWT Auth, WebSockets
-- **Database**: MongoDB Atlas or Local SQLite Fallback
-- **AI Engine**: Google Gemini API Integration
+A modern tailoring shop management portal built for tracking custom stitching orders, customer profiles, payment ledgers, and automated receipt generation.
 
 ---
 
-## Directory Structure
+## 🚀 Key Features
 
-```text
-choice-tailors/
-├── docker-compose.yml       # Local MongoDB compose file
-├── backend/
-│   ├── app/
-│   │   ├── main.py          # FastAPI application server entrypoint
-│   │   ├── config.py        # Settings configuration and OS directories
-│   │   ├── database.py      # MongoDB with SQLite fallback adapter
-│   │   ├── seed.py          # Seeding script with dummy clients and measurements
-│   │   └── routers/
-│   │       ├── auth.py      # Login and JWT security token router
-│   │       ├── customers.py # Customers CRUD and photo attachments upload router
-│   │       ├── orders.py    # Order builder and status progression router
-│   │       ├── billing.py   # PDF invoices billing compiler router
-│   │       ├── ai.py        # AI Assistant: Measurement variance, workload and WhatsApp draft router
-│   │       └── reports.py   # Sales reports router (Excel file compiler)
-│   └── requirements.txt     # Python backend dependencies
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   │   └── Sidebar.tsx  # Common premium layout sidebar navigation
-    │   └── app/
-    │       ├── layout.tsx   # Base fonts layout
-    │       ├── globals.css  # Velvet and Gold custom tailwind glassmorphic styles
-    │       ├── page.tsx     # Choice Tailors secure login screen
-    │       ├── dashboard/   # Dashboard analytical panels
-    │       ├── customers/   # Clients registry search and edit panels
-    │       ├── measurements/# Body-diagram templates sizing board
-    │       ├── orders/      # Kanban status order tracking boards
-    │       └── billing/     # Invoice compiler and print invoice builder
-    ├── package.json         # Next.js 15 packages
-    ├── tailwind.config.js   # TailorPro theme color definitions
-    ├── tsconfig.json        # TypeScript configuration
-    └── next.config.js       # Next.js settings
-```
+* **Dashboard Overview**: View key shop metrics (total billing, paid collections, and active queue counts) with full-width analytics.
+* **Customer Hub**: Create, edit, and delete customer profiles. Track individual lifetime order histories and outstanding payment dues.
+* **Stitching Queue**: Track garments by status (`Pending`, `Cutting`, `Stitching`, `Trial`, `Completed`, `Delivered`).
+* **Automated Receipts**: Compile beautiful PDF invoices dynamically using ReportLab.
+* **WhatsApp Share**: One-click redirection to send bills or measurement details directly to customers on WhatsApp Web.
+* **Dual Database Engine**: Automatically uses **MongoDB Atlas** for secure cloud storage, with a silent local **SQLite** fallback if the cloud cluster is offline.
 
 ---
 
-## Setup Instructions
+## 🛠️ Tech Stack
 
-### 1. Prerequisites
-- **Node.js**: `v18.0.0` or higher
-- **Python**: `v3.10` or higher
-- **Docker** (Optional, for running MongoDB database locally)
+* **Frontend**: Next.js (React), Tailwind CSS, Framer Motion, Recharts
+* **Backend**: FastAPI (Python), Motor (Async MongoDB), PyJWT (Authentication)
+* **Database**: MongoDB Atlas (Cloud) / SQLite (Local Fallback)
 
-### 2. Run Backend API Server
+---
 
-1. Open your terminal, change directory to `backend/`:
+## 💻 Local Setup Instructions
+
+### 1. Backend Setup
+1. Navigate to the backend directory:
    ```bash
    cd backend
    ```
-2. Install Python packages:
+2. Create and activate a Python virtual environment:
+   ```bash
+   python -m venv venv
+   # On Windows:
+   .\venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Set environment parameters in a `.env` file (Optional):
-   ```ini
-   MONGODB_URI=mongodb://localhost:27017
-   GEMINI_API_KEY=YOUR_GEMINI_KEY
+4. Create a `.env` file in the `backend/` folder and configure your variables:
+   ```env
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/choice_tailors?retryWrites=true&w=majority
+   JWT_SECRET=your_secure_jwt_secret_key_here
    ```
-4. Run DB Seeder script to load mock data:
-   ```bash
-   python app/seed.py
-   ```
-5. Run the FastAPI development server:
+5. Start the backend development server:
    ```bash
    python -m uvicorn app.main:app --reload --port 8000
    ```
-   *The API will be running on `http://127.0.0.1:8000`*
 
-### 3. Run Frontend Server
-
-1. Open another terminal session, change directory to `frontend/`:
+### 2. Frontend Setup
+1. Navigate to the frontend directory:
    ```bash
    cd ../frontend
    ```
-2. Install dependencies:
+2. Install Node dependencies:
    ```bash
    npm install
    ```
-3. Start the Next.js local dev server:
+3. Create a `.env.local` file in the `frontend/` folder:
+   ```env
+   NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+   ```
+4. Start the frontend development server:
    ```bash
    npm run dev
    ```
-   *The app UI will be visible at `http://localhost:3000`*
+5. Open [http://localhost:3000](http://localhost:3000) in your web browser.
 
-### 4. Admin Access Portal Credentials
-- **Username**: `choice.kadi@gmail.com`
-- **Password**: `Choice@123`
+---
+
+## 🌐 Production Deployment (Render)
+
+For step-by-step production deployment instructions to deploy both the backend and frontend on Render, please refer to the **[DEPLOY_INSTRUCTIONS.md](DEPLOY_INSTRUCTIONS.md)** file at the root of this project.
