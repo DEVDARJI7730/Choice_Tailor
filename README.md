@@ -2,6 +2,10 @@
 
 A modern tailoring shop management portal built for tracking custom stitching orders, customer profiles, payment ledgers, and automated receipt generation.
 
+## 🔗 Live Application Links
+* **Live Website**: [https://choice-tailor.onrender.com](https://choice-tailor.onrender.com)
+* **Live Backend API**: [https://choice-tailors-backend.onrender.com](https://choice-tailors-backend.onrender.com)
+
 ---
 
 ## 🚀 Key Features
