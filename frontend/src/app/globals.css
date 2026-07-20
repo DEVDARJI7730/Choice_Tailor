@@ -1,0 +1,212 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism Classes (Light Theme) */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  box-shadow: 0 4px 20px 0 rgba(15, 23, 42, 0.05);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(168, 44, 44, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px 0 rgba(168, 44, 44, 0.08);
+}
+
+/* Custom Scrollbars (Light Theme) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a82c2c;
+}
+
+/* Golden text gradient */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #b59210 0%, #876705 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Velvet red text gradient */
+.text-velvet-gradient {
+  background: linear-gradient(135deg, #a82c2c 0%, #7a1c1c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Input Fields styling (Light Theme) */
+.custom-input {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+}
+
+.custom-input:focus {
+  outline: none;
+  border-color: #a82c2c;
+  box-shadow: 0 0 0 2px rgba(168, 44, 44, 0.15);
+}
+
+/* Buttons styling (Light Theme) */
+.btn-gold {
+  background: linear-gradient(135deg, #aa7c11 0%, #876705 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-gold:hover {
+  background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%);
+  transform: scale(1.02);
+}
+
+.btn-crimson {
+  background: linear-gradient(135deg, #a82c2c 0%, #7a1c1c 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-crimson:hover {
+  background: linear-gradient(135deg, #c53030 0%, #a82c2c 100%);
+  transform: scale(1.02);
+}
+
+/* --- THEME FIXES & OVERRIDES --- */
+
+/* Fix absolute icon-text overlap in custom inputs */
+.custom-input.pl-10,
+input.custom-input.pl-10 {
+  padding-left: 2.5rem !important; /* 40px */
+}
+
+.custom-input.pl-8,
+input.custom-input.pl-8 {
+  padding-left: 2rem !important; /* 32px */
+}
+
+.custom-input.pl-7,
+input.custom-input.pl-7 {
+  padding-left: 1.75rem !important; /* 28px */
+}
+
+/* Recolor default browser text selection state */
+::selection {
+  background-color: #a82c2c !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background-color: #a82c2c !important;
+  color: #ffffff !important;
+}
+
+/* Fix dropdown native options highlight theme */
+select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  padding: 8px 12px;
+}
+
+select option:checked,
+select option:hover {
+  background: #a82c2c !important;
+  color: #ffffff !important;
+}
+
+/* Remove default blue outline/focus from browser elements and apply crimson outline */
+*:focus-visible {
+  outline: 2px solid #a82c2c !important;
+  outline-offset: 2px;
+}
+
+*:focus {
+  outline: none;
+}
+
+/* Override input browser autofill styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+/* --- PRINT MEDIA OPTIMIZATIONS --- */
+@media print {
+  /* Hide sidebar and other non-printable components */
+  aside,
+  header,
+  .print-hidden,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Reset layout containers to block to prevent side-by-side print alignments */
+  div.flex,
+  .flex {
+    display: block !important;
+  }
+
+  /* Expand main printable content to full width and clear padding */
+  main,
+  .print-full {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: white !important;
+    border: none !important;
+  }
+
+  /* Reset grids to standard vertical block progression */
+  .grid {
+    display: block !important;
+  }
+
+  /* Make columns take full-width on printed paper */
+  .lg\:col-span-6 {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Reset document colors for clean print ink economy */
+  body, 
+  html {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}
