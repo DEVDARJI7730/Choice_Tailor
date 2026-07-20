@@ -38,7 +38,7 @@ We have created a root `.gitignore` file that prevents credential leakage (your 
    * **Build Command**: `pip install -r requirements.txt`
    * **Start Command**: `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 5. Scroll down to **Environment Variables** (or click the *Environment* tab) and add:
-   * **`MONGODB_URI`**: `mongodb+srv://darjidev2504_db_user:Chirag7730@cluster0.jpkg68b.mongodb.net/choice_tailors?retryWrites=true&w=majority`
+   * **`MONGODB_URI`**: `mongodb+srv://<username>:<password>@<your-cluster>.mongodb.net/choice_tailors?retryWrites=true&w=majority`
    * **`JWT_SECRET`**: `choice_tailors_super_secret_key_12345`
 6. Click **Deploy Web Service**.
 7. Once deployed, **copy your Backend URL** (e.g., `https://choice-tailors-backend.onrender.com`). You will need this for the frontend!
