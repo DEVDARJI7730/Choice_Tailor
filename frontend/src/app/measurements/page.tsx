@@ -17,7 +17,8 @@ import {
   FileText,
   Maximize2,
   X,
-  Printer
+  Printer,
+  Crop
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -79,6 +80,20 @@ export default function Measurements() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const base64ToFile = (base64String: string, filename: string): File => {
+    const arr = base64String.split(",");
+    const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
+
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropPurpose, setCropPurpose] = useState<"attachment" | "scan">("attachment");
 
   // AI check states
   const [aiChecked, setAiChecked] = useState(false);
@@ -286,7 +301,8 @@ export default function Measurements() {
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL("image/png");
-        setPhotoBase64(dataUrl);
+        setCropImageSrc(dataUrl);
+        setCropPurpose("attachment");
         stopCamera();
       }
     }
@@ -296,22 +312,30 @@ export default function Measurements() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
-      setPhotoBase64(null);
       stopCamera();
-      
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFilePreview(reader.result as string);
+        setCropImageSrc(reader.result as string);
+        setCropPurpose("attachment");
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleScanBill = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScanBill = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCropImageSrc(reader.result as string);
+      setCropPurpose("scan");
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const runScanBillApi = async (croppedBase64: string) => {
     setIsScanning(true);
     const token = localStorage.getItem("token");
     if (!token) {
@@ -321,16 +345,12 @@ export default function Measurements() {
     }
 
     try {
+      const file = base64ToFile(croppedBase64, "cropped_bill.jpg");
       const formData = new FormData();
       formData.append("photo_file", file);
 
-      // Set file previews
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFilePreview(reader.result as string);
-        setSelectedFile(file);
-      };
-      reader.readAsDataURL(file);
+      setFilePreview(croppedBase64);
+      setSelectedFile(file);
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/measurements/scan-bill`, {
         method: "POST",
@@ -397,7 +417,6 @@ export default function Measurements() {
       setSelectedFile(null);
     } finally {
       setIsScanning(false);
-      e.target.value = "";
     }
   };
 
@@ -1249,6 +1268,259 @@ export default function Measurements() {
           </div>
         )}
       </AnimatePresence>
+
+      {cropImageSrc && (
+        <ImageCropperModal
+          src={cropImageSrc}
+          onCrop={(cropped) => {
+            if (cropPurpose === "scan") {
+              runScanBillApi(cropped);
+            } else {
+              const file = base64ToFile(cropped, "snapshot.jpg");
+              setSelectedFile(file);
+              setFilePreview(cropped);
+              setPhotoBase64(null);
+            }
+            setCropImageSrc(null);
+          }}
+          onClose={() => setCropImageSrc(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+
+interface ImageCropperModalProps {
+  src: string;
+  onCrop: (croppedBase64: string) => void;
+  onClose: () => void;
+}
+
+function ImageCropperModal({ src, onCrop, onClose }: ImageCropperModalProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  
+  const [crop, setCrop] = useState({ x: 15, y: 15, w: 70, h: 70 }); // percentages
+  const [aspectRatio, setAspectRatio] = useState<"free" | "1:1" | "3:4">("free");
+
+  const isDragging = useRef(false);
+  const isResizing = useRef(false);
+  const dragStartOffset = useRef({ x: 0, y: 0 });
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const pointerX = ((e.clientX - rect.left) / rect.width) * 100;
+    const pointerY = ((e.clientY - rect.top) / rect.height) * 100;
+
+    // Check if clicked the resize handle (bottom right of crop box)
+    const handleSize = 5; // buffer area in %
+    const cropRight = crop.x + crop.w;
+    const cropBottom = crop.y + crop.h;
+    
+    if (
+      Math.abs(pointerX - cropRight) < handleSize &&
+      Math.abs(pointerY - cropBottom) < handleSize
+    ) {
+      isResizing.current = true;
+      e.preventDefault();
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      return;
+    }
+
+    // Check if clicked inside the crop box to drag
+    if (
+      pointerX >= crop.x &&
+      pointerX <= crop.x + crop.w &&
+      pointerY >= crop.y &&
+      pointerY <= crop.y + crop.h
+    ) {
+      isDragging.current = true;
+      dragStartOffset.current = {
+        x: pointerX - crop.x,
+        y: pointerY - crop.y
+      };
+      e.preventDefault();
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const pointerX = ((e.clientX - rect.left) / rect.width) * 100;
+    const pointerY = ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (isDragging.current) {
+      let nextX = pointerX - dragStartOffset.current.x;
+      let nextY = pointerY - dragStartOffset.current.y;
+
+      nextX = Math.max(0, Math.min(100 - crop.w, nextX));
+      nextY = Math.max(0, Math.min(100 - crop.h, nextY));
+
+      setCrop(prev => ({ ...prev, x: nextX, y: nextY }));
+    } else if (isResizing.current) {
+      let nextW = pointerX - crop.x;
+      let nextH = pointerY - crop.y;
+
+      if (aspectRatio === "1:1") {
+        const side = Math.min(nextW, nextH);
+        nextW = Math.max(10, Math.min(100 - crop.x, 100 - crop.y, side));
+        nextH = nextW;
+      } else if (aspectRatio === "3:4") {
+        nextH = nextW / 0.75;
+        if (crop.y + nextH > 100) {
+          nextH = 100 - crop.y;
+          nextW = nextH * 0.75;
+        }
+      }
+
+      nextW = Math.max(10, Math.min(100 - crop.x, nextW));
+      nextH = Math.max(10, Math.min(100 - crop.y, nextH));
+
+      setCrop(prev => ({ ...prev, w: nextW, h: nextH }));
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    isDragging.current = false;
+    isResizing.current = false;
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch (err) {}
+  };
+
+  const handleCropComplete = () => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const sourceX = (crop.x / 100) * img.naturalWidth;
+      const sourceY = (crop.y / 100) * img.naturalHeight;
+      const sourceW = (crop.w / 100) * img.naturalWidth;
+      const sourceH = (crop.h / 100) * img.naturalHeight;
+
+      canvas.width = sourceW;
+      canvas.height = sourceH;
+
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, sourceW, sourceH);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        onCrop(dataUrl);
+      }
+    };
+    img.src = src;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-xl flex flex-col shadow-2xl overflow-hidden max-h-[90vh]">
+        
+        {/* Header */}
+        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div className="flex items-center gap-2">
+            <Crop className="w-5 h-5 text-red-600 animate-pulse" />
+            <div>
+              <h3 className="font-extrabold text-slate-800 text-sm">Crop Snapped Image</h3>
+              <p className="text-[10px] text-slate-500 mt-0.5">રૂપરેખા ક્રોપ કરો - Drag box to move, red dot to resize</p>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-1.5 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Workspace Body */}
+        <div className="p-6 flex-1 flex flex-col items-center justify-center min-h-[300px]">
+          <div 
+            ref={containerRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            className="relative select-none touch-none flex items-center justify-center border border-slate-200 rounded bg-slate-950/5 max-h-[50vh] overflow-hidden"
+          >
+            <img 
+              ref={imageRef}
+              src={src} 
+              alt="Crop source" 
+              className="max-h-[50vh] max-w-full select-none pointer-events-none"
+            />
+            
+            {/* Cropping Grid Backdrop Shadows */}
+            <div className="absolute top-0 left-0 right-0 bg-slate-950/65 pointer-events-none" style={{ height: `${crop.y}%` }} />
+            <div className="absolute bottom-0 left-0 right-0 bg-slate-950/65 pointer-events-none" style={{ top: `${crop.y + crop.h}%` }} />
+            <div className="absolute left-0 bg-slate-950/65 pointer-events-none" style={{ top: `${crop.y}%`, width: `${crop.x}%`, height: `${crop.h}%` }} />
+            <div className="absolute right-0 bg-slate-950/65 pointer-events-none" style={{ top: `${crop.y}%`, left: `${crop.x + crop.w}%`, right: 0, height: `${crop.h}%` }} />
+            
+            {/* Highlighted Crop Area Box */}
+            <div 
+              style={{ left: `${crop.x}%`, top: `${crop.y}%`, width: `${crop.w}%`, height: `${crop.h}%` }}
+              className="absolute border-2 border-red-600 border-dashed cursor-move shadow-[0_0_0_1px_rgba(255,255,255,0.5)] flex items-center justify-center"
+            >
+              {/* Corner Grid Guides */}
+              <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-40">
+                <div className="border-r border-b border-white" />
+                <div className="border-r border-b border-white" />
+                <div className="border-b border-white" />
+                <div className="border-r border-b border-white" />
+                <div className="border-r border-b border-white" />
+                <div className="border-b border-white" />
+                <div className="border-r border-white" />
+                <div className="border-r border-white" />
+                <div className="pointer-events-none" />
+              </div>
+              
+              {/* Bottom Right Resize Handle (Red Circle Dot) */}
+              <div className="absolute -bottom-2.5 -right-2.5 w-5 h-5 bg-red-600 border-2 border-white rounded-full cursor-se-resize shadow-md flex items-center justify-center hover:scale-110 active:scale-125 transition-transform" />
+            </div>
+          </div>
+        </div>
+
+        {/* Aspect Ratio Selector bar */}
+        <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Aspect Ratio</span>
+          <div className="flex gap-2">
+            {(["free", "1:1", "3:4"] as const).map((ratio) => (
+              <button
+                key={ratio}
+                onClick={() => setAspectRatio(ratio)}
+                className={`px-3 py-1 rounded text-[11px] font-bold uppercase border transition-all ${
+                  aspectRatio === ratio
+                    ? "bg-slate-800 text-white border-slate-800 shadow-sm"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                {ratio === "free" ? "Custom" : ratio}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Modal Buttons */}
+        <div className="p-4 border-t border-slate-100 flex gap-3 bg-slate-50/50">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 text-xs font-semibold rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors shadow-sm"
+          >
+            Cancel
+          </button>
+          
+          <button
+            onClick={handleCropComplete}
+            className="flex-grow flex-shrink-0 w-2/3 py-2 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+          >
+            <CheckCircle className="w-4 h-4" />
+            <span>Crop & Attach Image</span>
+          </button>
+        </div>
+
+      </div>
     </div>
   );
 }
