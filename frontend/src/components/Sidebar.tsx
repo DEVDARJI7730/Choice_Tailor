@@ -59,13 +59,19 @@ export default function Sidebar() {
       >
         <div>
           {/* Brand & Close button */}
-          <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-100/50">
-            <Link href="/dashboard" className="flex items-center justify-center max-w-[170px]">
-              <img 
-                src="/logo.jpg" 
-                alt="Choice Tailors" 
-                className="w-full h-auto max-h-16 object-contain rounded-lg shadow-sm border border-slate-200" 
-              />
+          <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+            <Link href="/dashboard" className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-amber-500 flex items-center justify-center shadow-md shadow-red-200 border border-red-700/10">
+                <Scissors className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-[13px] font-black tracking-wider text-slate-800 uppercase font-sans">
+                  Choice Tailors
+                </h2>
+                <span className="text-[9px] font-bold text-red-600 tracking-wider uppercase block mt-0.5">
+                  Gents Specialist
+                </span>
+              </div>
             </Link>
 
             {/* Mobile Close Icon Button */}

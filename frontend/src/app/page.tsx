@@ -61,12 +61,16 @@ export default function LoginPage() {
       >
         {/* Logo / Header */}
         <div className="text-center mb-8 flex flex-col items-center">
-          <img 
-            src="/logo.jpg" 
-            alt="Choice Tailors" 
-            className="w-full max-w-[340px] h-auto rounded-xl shadow-lg border border-slate-200 mb-2 object-contain bg-slate-950" 
-          />
-          <div className="inline-block mt-1 px-3 py-1 bg-red-50 border border-red-200 rounded-full text-xs text-red-700 font-semibold uppercase tracking-wider">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-500 flex items-center justify-center shadow-lg shadow-red-200 border border-red-700/10 mb-4">
+            <Scissors className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-black tracking-widest font-sans text-slate-800 uppercase">
+            CHOICE TAILORS
+          </h1>
+          <p className="text-[10px] font-bold text-red-600 tracking-widest uppercase mt-1">
+            Gents Only Specialist
+          </p>
+          <div className="inline-block mt-3 px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-[10px] text-slate-600 font-bold uppercase tracking-wider shadow-sm">
             Shop Management Portal
           </div>
         </div>
