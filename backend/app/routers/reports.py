@@ -183,10 +183,18 @@ async def generate_invoice_pdf(
     )
     
     # Header Section
-    story.append(Paragraph("<b>CHOICE TAILORS</b>", title_style))
-    story.append(Paragraph("REAL MEN REAL CHOICE...", subtitle_style))
-    story.append(Paragraph("Gandhi Chok, Kadi | Nr. Nilkanth Lodge<br/>M: 9925256898", normal_style))
-    story.append(Spacer(1, 15))
+    logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logo.jpg")
+    if os.path.exists(logo_path):
+        from reportlab.platypus import Image
+        logo_img = Image(logo_path, width=225, height=150)
+        logo_img.hAlign = 'CENTER'
+        story.append(logo_img)
+        story.append(Spacer(1, 15))
+    else:
+        story.append(Paragraph("<b>CHOICE TAILORS</b>", title_style))
+        story.append(Paragraph("REAL MEN REAL CHOICE...", subtitle_style))
+        story.append(Paragraph("Gandhi Chok, Kadi | Nr. Nilkanth Lodge<br/>M: 9925256898", normal_style))
+        story.append(Spacer(1, 15))
     
     # Invoice Metadata Grid (Date, ID, Billed To)
     meta_data = [
